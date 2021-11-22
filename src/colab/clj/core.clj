@@ -23,8 +23,7 @@
 
                  :on-text (fn [ws text-message]
                             ; broadcast this message to everyone except itself
-                            (doall (map #(send! % text-message) (filter #(not= ws %) @connections))))
-                 })
+                            (doall (map #(send! % text-message) (filter #(not= ws %) @connections))))})
 
 (def websocket-routes {"/ws" ws-handler})
 
