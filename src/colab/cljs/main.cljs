@@ -4,16 +4,27 @@
             [colab.cljs.lib.webrtc :as webrtc]))
 
 
+(enable-console-print!)
+
 (defn local-video []
   (js/document.getElementById "local-video"))
 
 (defn remote-video []
   (js/document.getElementById "remote-video"))
 
+(defn set-stream
+  [video stream]
+  (set! (.-srcObject video ) stream)
+  (set! (.-onloadedmetadata video) (fn [] (.play video))))
+
 (defn get-video
   []
-  (.then (.getUserMedia (.-mediaDevices js/navigator) (clj->js {:audio true :video true}))
-         (fn [stream] (set! (.-srcObject (local-video)) stream))))
+  (-> js/navigator
+      .-mediaDevices
+      (.getUserMedia #js {:video true :audio false})
+      (.then (fn [stream]
+               (set-stream (local-video) stream)))))
+
 
 
 (defn Application []
