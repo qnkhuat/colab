@@ -13,6 +13,7 @@
   (route/not-found "Where are you going?"))
 
 (def ws-handler {:on-connect (fn [ws]
+                               (println "New connection")
                                (swap! connections conj ws))
 
                  :on-error (fn [ws _e]
@@ -22,6 +23,7 @@
                              (swap! connections disj ws))
 
                  :on-text (fn [ws text-message]
+                            (println "Got a text: " text-message)
                             ; broadcast this message to everyone except itself
                             (doall (map #(send! % text-message) (filter #(not= ws %) @connections))))})
 

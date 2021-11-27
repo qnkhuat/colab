@@ -2,6 +2,9 @@
   (:require [clojure.test :refer :all]
             [colab.core :refer :all]))
 
+(use 'hashp.core)
+
 (deftest a-test
   (testing "FIXME, I fail."
-    (is (= 0 1))))
+    (let [a #p (+ 1 2 3)]
+      (is (= 3 a)))))
