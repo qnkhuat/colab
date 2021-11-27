@@ -69,26 +69,42 @@
 
 (defn handle-receive-offer
   [offer]
-  (.setRemoteDescription @peer-conn offer)
-  (.createAnswer @peer-conn
-                 (fn [answer]
-                   (.setLocalDescription @peer-conn answer)
-                   (send-when-connected @ws-conn {:type :answer
-                                                  :payload answer}))
-                 (fn [e]
-                   (js/console.error "Failed to create answer: " e))))
-
+  (let [desc (js/RTCSessionDescription. offer)]
+    (-> @peer-conn
+        (.setRemoteDescription desc)
+        (.then (fn []
+                 (-> js/navigator
+                     .-mediaDevices
+                     (.getUserMedia #js {:video true :audio false})
+                     (.then (fn [stream]
+                              (set-stream (local-video) stream)
+                              (doall (map #(.addTrack @peer-conn %) (.getTracks stream)))))
+                     (.catch (fn [e]
+                               (js/console.error "Failed to start local video: " e))))))
+        (.then (fn []
+                 (.createAnswer @peer-conn
+                                (fn [answer]
+                                  (js/console.log "senders" (.getSenders @peer-conn))
+                                  (.setLocalDescription @peer-conn answer)
+                                  (send-when-connected @ws-conn {:type    :answer
+                                                                 :payload answer}))
+                                (fn [e]
+                                  (js/console.error "Failed to create answer: " e))))))))
 (defn handle-receive-answer
   [answer]
-  (.setRemoteDescription @peer-conn answer))
+  (.setRemoteDescription @peer-conn (js/RTCSessionDescription. answer)))
 
 (defn handle-receive-ice-candidate [ice-candidate]
-  (.addIceCandidate @peer-conn ice-candidate))
+  (let [ice-candidate (js/RTCIceCandidate. ice-candidate)]
+    (-> @peer-conn
+        (.addIceCandidate  ice-candidate)
+        (.catch (fn [e]
+                  (js/console.error "Failed to add candidate: " e))))))
 
 (defn handle-ws-message
   [msg]
+  (js/console.log "Got a message: " msg)
   (let [msg (-> msg .-data edn/read-string)]
-    (js/console.log "received a message : " (clj->js msg))
     (case (keyword (:type msg))
       :offer     (handle-receive-offer (:payload msg))
       :answer    (handle-receive-answer (:payload msg))
@@ -101,8 +117,12 @@
       .-mediaDevices
       (.getUserMedia #js {:video true :audio false})
       (.then (fn [stream]
-               (handle-get-media-succeed stream @peer-conn)
+               (set-stream (local-video) stream)
+               (doall (map #(.addTrack @peer-conn %) (.getTracks stream)))))
+      (.then (fn []
+               (js/console.log "senders" (.getSenders @peer-conn))
                (send-offer @peer-conn @ws-conn)))
+
       (.catch (fn [e]
                 ;; TODO: handle cases when users don't have camera on audio
                 (js/console.error "Failed to start local video: " e)))))
@@ -113,33 +133,24 @@
 
 (defn handle-peer-on-track
   [e]
-  (js/console.log "new tracks:" (clj->js e)))
+  (js/console.log "trackne:" e)
+  (set-stream (remote-video) (first (.-streams e))))
 
 (defn handle-on-ice-candidate
   [e]
-  (js/console.log "on ice candidate")
   (when  (.-candidate e)
     (send-when-connected @ws-conn {:type    :candidate
-                                   :payload (.-candidate e)})))
-
-;(defn handle-negotiation-needed-event
-;  []
-;  (.createOffer peer-conn
-;                (fn [offer]
-;                  (.setLocalDescription peer-conn offer)
-;                  (send-when-connected ws-conn {:type    :offer
-;                                                :payload offer}))
-;                (fn [e]
-;                  (js/console.error "Failed to create offer: " e))))
+                                   :payload (.toJSON (.-candidate e))})))
 
 (defn App
   []
   (let [ws   (js/WebSocket. "ws://localhost:3000/ws/")
         peer (js/RTCPeerConnection. ice-candidate-config)]
+
     (set! (.-onmessage ws) handle-ws-message)
     (set! (.-onopen ws) (fn [_e] (js/console.log "WebSocket connected!")))
 
-    (set! (.-onconnectionstatechange peer) handle-on-peer-conn-state-change)
+    (set! (.-OnConnectionStateChange peer) handle-on-peer-conn-state-change)
     (set! (.-ontrack peer) handle-peer-on-track)
     (set! (.-onicecandidate peer) handle-on-ice-candidate)
     (reset! ws-conn ws)
