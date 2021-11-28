@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "shadow:watch": "shadow-cljs watch frontend",
-    "shadow:release": "shadow-cljs release frontend",
+    "shadow:watch": "shadow-cljs watch app",
+    "shadow:release": "shadow-cljs release app",
     "postcss:build": "TAILWIND_MODE=build postcss src/colab/cljs/tailwind.css -o ./public/css/main.css --verbose",
     "postcss:watch": "TAILWIND_MODE=watch postcss src/colab/cljs/tailwind.css -o ./public/css/main.css --verbose -w",
     "postcss:release": "NODE_ENV=production postcss src/colab/cljs/tailwind.css -o ./public/css/main.css --verbose",

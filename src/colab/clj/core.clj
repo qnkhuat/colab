@@ -7,6 +7,8 @@
             [compojure.route :as route])
   (:gen-class))
 
+; TODO: use https://github.com/jarohen/chord instead of jetty 9 websocket
+
 (defonce connections (atom #{}))
 
 (defroutes routes
@@ -23,8 +25,8 @@
                              (swap! connections disj ws))
 
                  :on-text (fn [ws text-message]
-                            (println "Got a text: " text-message)
                             ; broadcast this message to everyone except itself
+                            (println "Broadcasted to " (-> @connections count dec))
                             (doall (map #(send! % text-message) (filter #(not= ws %) @connections))))})
 
 (def websocket-routes {"/ws" ws-handler})

@@ -12,10 +12,10 @@
 
  :dev-http {8000 "public"}
  :builds
- {:frontend
-  {:target :browser
-   :modules {:main {:init-fn colab.cljs.main/init}}
-   :closure-defines {colab.cljs.env/API_URL #shadow/env ["API_URL" :default "http://localhost:3000"]}
-   :compiler-options {:infer-externs :auto
+ {:app
+  {:target           :browser
+   :modules          {:main {:init-fn colab.cljs.main/init}}
+   :closure-defines  {colab.cljs.env/API_URL #shadow/env ["API_URL" :default "http://localhost:3000"]}
+   :compiler-options {:infer-externs      :auto
                       :output-feature-set :es5}
-   :devtools {:preloads [hashp.core]}}}}
+   :devtools         {:preloads [hashp.core]}}}}
