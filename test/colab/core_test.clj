@@ -4,7 +4,11 @@
 
 (use 'hashp.core)
 
-(deftest a-test
+(defn meaning-of-life
+  []
+  {:answer 42})
+
+(deftest meaning-of-life-test
   (testing "FIXME, I fail."
-    (let [a #p (+ 1 2 3)]
-      (is (= 3 a)))))
+    (let [a #p (meaning-of-life)]
+      (is (= {:answer 42} a)))))

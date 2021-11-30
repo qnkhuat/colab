@@ -58,7 +58,6 @@
        (fn [e]
          (js/console.error "Failed to create offer: " e)))))
 
-
 (defn handle-receive-answer
   [answer]
   (.setRemoteDescription @peer-conn (js/RTCSessionDescription. answer)))
